@@ -183,7 +183,7 @@ function insertFormattedSection(body, index, section, sectionNumber) {
   if (section.Command) index = InsertBoldLabelParagraph(body, index, "Command", section.Command);
   if (section.Steps && Array.isArray(section.Steps)) {
     section.Steps.forEach(step => {
-      body.insertParagraph(index++, "*" + step);
+      body.insertParagraph(index++, "\t" + step);
     });
   }
 
@@ -328,7 +328,7 @@ function getEnabledIntegrationSections() {
     const steps = implementFlag === "yes" ? integration.Implement : integration.Remove;
 
     output.push({
-      Sectionheader: `${integration.Name}: ${actionType}`,
+      SectionHeader: `${integration.Name}: ${actionType}`,
       Type: "Integration",
       Purpose: `${integration.Purpose}`,
       Input: "N/A",

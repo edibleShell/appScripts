@@ -127,30 +127,47 @@ function createUcd() {
 }
 
 function useCaseInstructions() {
-  // Adds paragraphs to the playbook that provide links to 
-  // guides on how to configure required integrations
-
-  const sections = getSectionsToImplement();
+  const playbookSections = getSectionsToImplement();
+  const integrationSections = getEnabledIntegrationSections();
   const doc = DocumentApp.openById(ucdFileId);
   const body = doc.getBody();
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('UCD_Features');
-  const rows = sheet.getDataRange().getValues();
+
+  // Handle {{SECTION_START}} placeholder
   const placeholder = "{{SECTION_START}}";
   const firstMatch = body.findText(placeholder);
   if (!firstMatch) throw new Error("Placeholder not found.");
   const placeholderElement = firstMatch.getElement().getParent();
   const insertIndex = body.getChildIndex(placeholderElement);
-  insertIntegrationsAtPlaceholder(body, "{{INTEGRATIONS_TABLE}}");
-  getEnabledIntegrationSections(body, "{{INTEGRATION_STEPS}}");
-
-  // Replace placeholder with first section, then loop through additional sections
   body.removeChild(placeholderElement);
 
+  // Insert integration table at placeholder {{INTEGRATIONS_TABLE}}
+  insertIntegrationsAtPlaceholder(body, "{{INTEGRATIONS_TABLE}}");
+
+  // Begin inserting sections
   let currentIndex = insertIndex;
-  for (let i = 0; i < sections.length; i++) {
-    currentIndex = insertFormattedSection(body, currentIndex, sections[i], i + 1);
+  let sectionCounter = 1;
+
+  // 🔹 Insert Integration Sections First
+  if (integrationSections.length > 0) {
+    const integrationHeader = body.insertParagraph(currentIndex++, "Integrations");
+    integrationHeader.setHeading(DocumentApp.ParagraphHeading.HEADING2);
+
+    integrationSections.forEach(section => {
+      currentIndex = insertFormattedSection(body, currentIndex, section, sectionCounter++);
+    });
   }
-  doc.saveAndClose
+
+  // 🔹 Then Insert Playbook Input Sections
+  if (playbookSections.length > 0) {
+    const playbookHeader = body.insertParagraph(currentIndex++, "Playbook Configuration");
+    playbookHeader.setHeading(DocumentApp.ParagraphHeading.HEADING2);
+
+    playbookSections.forEach(section => {
+      currentIndex = insertFormattedSection(body, currentIndex, section, sectionCounter++);
+    });
+  }
+
+  doc.saveAndClose();
 }
 
 function insertFormattedSection(body, index, section, sectionNumber) {

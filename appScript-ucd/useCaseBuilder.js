@@ -192,7 +192,7 @@ function createUcd() {
 function useCaseInstructions() {
   const playbookSections = getSectionsToImplement();
   const integrationSections = getEnabledIntegrationSections();
-  const sections = [integrationSections, playbookSections];
+  const sections = [...integrationSections, ...playbookSections];
   const doc = DocumentApp.openById(ucdFileId);
   const body = doc.getBody();
 
@@ -407,7 +407,38 @@ function getEnabledIntegrationSections() {
 
 function appendToProjectTracker(sections) {
   const trackerSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Project_Tracker");
-  if (!trackerSheet) throw new Error("Project_Tracker sheet not found.");
+  const featuresSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("UCD_Features");
+  if (!trackerSheet || !featuresSheet) throw new Error("Project_Tracker or UCD_Features sheet not found.");
+
+  const headers = [
+    "Feature",
+    "Use Case Document Step",
+    "OOTB Feature",
+    "Custom Feature",
+    "Implemented",
+    "Description"
+  ];
+
+  if (trackerSheet.getLastRow() === 0) {
+    trackerSheet.appendRow(headers);
+  }
+
+  if (trackerSheet.getLastRow() > 1) {
+    trackerSheet.getRange(2, 1, trackerSheet.getLastRow() - 1, trackerSheet.getLastColumn()).clearContent();
+  }
+
+  const featureData = featuresSheet.getDataRange().getValue();
+  const featureHeaders = featureData[0];
+  const featureRows = featureData.slice(1);
+  const featureDescMap = {};
+  const featureIndex = featureHeaders.indexOf("Feature");
+  const descIndex = featureHeaders.indexOf("Description");
+
+  featureRows.forEach(rows => {
+    const key = String(row[featureIndex]).trim().toLowerCase();
+    const Description = row[descIndex] || "";
+    featureDescMap[key] = Description;
+  });
 
   let stepCounter = 1;
   sections.forEach(section => {
@@ -416,10 +447,40 @@ function appendToProjectTracker(sections) {
       `${stepCounter}. ${section.SectionHeader || "Untitled"}`,
       section.Type === "Integration" ? "No":"Yes",
       section.Type === "Integration" ? "Yes":"No",
-      "Yes",
+      "No",
       section.Purpose || ""
     ];
     trackerSheet.appendRow(row);
     stepCounter++;
   });
+  const lastRow = trackerSheet.getLastRow();
+  const implementedRange = trackerSheet.getRange(2, 5, lastRow -1);
+
+  const rule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(["Yes", "No"], true)
+    .setAllowInvalid(false)
+    .build();
+
+  implementedRange.setDataValidation(rule);
+
+  const rules = trackerSheet.getConditionalFormatRules();
+
+  rules.push(
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo("Yes")
+      .setBackground("#c6efce")
+      .setFontColor("#006100")
+      .setRanges([implementedRange])
+      .build()
+  );
+
+  rules.push(
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo("No")
+      .setBackground("#ffc7ce")
+      .setFontColor("#9c0006")
+      .setRanges([implementedRange])
+      .build()
+  );
+  trackerSheet.setConditionalFormatRules(rules);
 }

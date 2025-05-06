@@ -12,14 +12,14 @@ const allSections = [
     SectionHeader: "Configure On-Call Assignment",
     Type: "Playbook Input",
     Purpose: "When set to True this configures the playbook to only assign the incident to a user that is currently on shift. Read about setting up Shift Management in XSOAR from this link in the admin guide, https://docs-cortex.paloaltonetworks.com/r/Cortex-XSOAR/8/Cortex-XSOAR-Cloud-Documentation/Manage-roles-in-the-Cortex-XSOAR-tenant",
-    Input: "inputs.OnCall: True",
+    Input: "inputs.OnCall: True/False",
     Command: "N/A",
   },
   {
     SectionHeader: "Email Hunting Create New Incidents",
     Type: "Playbook Input",
     Purpose: "When set to True the sub-playbook, Phishing - Handle Microsoft 365 Defender Results will open new incidents if indicators from this Phishing incident are discovered on additional endpoints.",
-    Input: "inputs.EmailHuntingCreateNewIncidents: True",
+    Input: "inputs.EmailHuntingCreateNewIncidents: True/False",
     Command: "N/A",
   },
   {
@@ -40,14 +40,77 @@ const allSections = [
     SectionHeader: "Set End User Engagement",
     Type: "Playbook Input",
     Purpose: "Specify whether to engage with the user via email for investigation updates.Set the value to 'True' to allow user engagement, or 'False' to avoid user engagement.",
-    Input: "inputs.EndUserEngagement: True",
+    Input: "inputs.EndUserEngagement: True/False",
     Command: "N/A"
   },
   {
     SectionHeader: "Set Take Manual Actions",
     Type: "Playbook Input",
     Purpose: "Specify whether to stop the playbook to take additional action before closing the incident. Set the value to 'True' to stop the playbook before closing the incidents, or 'False' to close the incident once the playbook flow is done.",
-    Input: "inputs.TakeManualActions: True",
+    Input: "inputs.TakeManualActions: True/False",
+    Command: "N/A",
+  },
+  {
+    SectionHeader: "Non Malicious Email Review",
+    Type: "Playbook Input",
+    Purpose: "In case of an incident with a non-malicious email, it is possible either to close the incident or to review and approve it by an analyst.Set the value 'True' for a review of the incident by an analyst. Set the value 'False' to close the incident.",
+    Input: "inputs.NonMaliciousEmailReview",
+    Command: "N/A",
+  },
+  {
+    SectionHeader: "Detonate URL",
+    Type: "Playbook Input",
+    Purpose: "Determines whether to use the ‘URL Detonation’ playbook. Detonating a URL may take a few minutes. This playbook will leverage third party integrations to perform the sandboxing. Make sure these integrations are configured in the customer environment if they use URL detonation services.",
+    Input: "inputs.DetonateUrl: True/False",
+    Command: "N/A",
+  },
+  {
+    SectionHeader: "Internal Range",
+    Type: "Playbook Input",
+    Purpose: "This input is used in the ‘Entity Enrichment - Phishing v2’ playbook.A list of internal IP ranges to check IP addresses against. The comma-separated list should be provided in CIDR notation. For example, a list of ranges is: '172.16.0.0/12,10.0.0.0/8,192.168.0.0/16' (without quotes). The default list name is called PrivateIPs. This list would need to exist in XSOAR before it is able to be leveraged in the playbook. Here is a link that provides instructions on how to create a list https://docs-cortex.paloaltonetworks.com/r/Cortex-XSOAR/8/Cortex-XSOAR-Cloud-Documentation/Create-a-list",
+    Input: "inputs.InternalRange: lists.PrivateIPs",
+    Command: "N/A",
+  },
+  {
+    SectionHeader: "Internal Domains",
+    Type: "Playbook Input",
+    Purpose: "A CSV list of internal domains. The list is used to determine whether an email address is internal or external. This list would need to exist in XSOAR before it is able to be leveraged in the playbook. Here is a link that provides instructions on how to create a list https://docs-cortex.paloaltonetworks.com/r/Cortex-XSOAR/8/Cortex-XSOAR-Cloud-Documentation/Create-a-list",
+    Input: "inputs.InternalDomains: lists.InternalDomains",
+    Command: "N/A",
+  },
+  {
+    SectionHeader: "Authenticate Email",
+    Type: "Playbook Input",
+    Purpose: " Determines whether the authenticity of the email should be verified using SPF, DKIM, and DMARC. SPF ensures that the email is being sent from an authorized mail server for the given domain. DKIM uses cryptographic signatures to ensure that the email contents were not altered in transit. DMARC allows domain owners to define how to handle emails that fail SPF or DKIM (reject, quarantine, or allow).",
+    Input: "inputs.AuthenticateEmail: True/False",
+    Command: "N/A",
+  },
+  {
+    SectionHeader: "Check Microsoft Headers",
+    Type: "Playbook Input",
+    Purpose: "Whether to check Microsoft headers for BCL/PCL/SCL scores and set the 'Severity' and 'Email Classification' accordingly.BCL (Bulk Containment Level) measures how likely an email is a bulk (mass) email on a scale of 0 - 9. 0-3 likely legitimate bulk email, 4-7, questionable bulk email (possible spam), and 8-9 High-Risk bulk email (more likely to be junk or spam). PCL (Phishing Confidence Level) determines the likelihood of an email being phishing on a scale of 1 - 8. 1-3 is likely safe (low risk), 4-5 is suspicious (requires manual review), and 6-8 is a high confidence score that the email is phishing and should be blocked or quarantined. SCL (Spam Confidence Level) assigns a spam likelihood score to an email on a scale of -1 - 9. -1 is a safe email (whitelisted), 0-1 is a normal email (not spam), 5-6 likely spam (goes to junk), and 7-9 is High confidence spam (blocked or quarantined).",
+    Input: "inputs.CheckMicrosoftHeaders: True/False",
+    Command: "N/A",
+  },
+  {
+    SectionHeader: "Get Original Email",
+    Type: "Playbook Input",
+    Purpose: "For forwarded emails. When 'True', retrieves the original email in the thread.You must have the necessary permissions in your email service to execute global search.- For EWS: eDiscovery - For Gmail: Google Apps Domain-Wide Delegation of Authority - For MSGraph: As described in these links https://docs.microsoft.com/en-us/graph/api/message-get, https://docs.microsoft.com/en-us/graph/api/user-list-messages",
+    Input: "inputs.GetORiginalEmail: True/False",
+    Command: "N/A",
+  },
+  {
+    SectionHeader: "Original Authentication Header",
+    Type: "Playbook Input",
+    Purpose: "This input will be used as the 'original_authentication_header' argument in the 'CheckEmailAuthenticity' script under the 'Authenticate email' task.The header that holds the original Authentication-Results header value. This can be used when an intermediate server changes the original email and holds the original header value in a different header. Note - Use this only if you trust the server creating this header.",
+    Input: "inputs.OriginalAuthenticationHeader: True/False",
+    Command: "N/A",
+  },
+  {
+    SectionHeader: "Phishing Model Name",
+    Type: "Playbook Input",
+    Purpose: "Optional - the name of a pre-trained phishing model to predict phishing type using machine learning.",
+    Input: "inputs.PhishingModelName: Phishing Model",
     Command: "N/A",
   }
 ]
@@ -129,6 +192,7 @@ function createUcd() {
 function useCaseInstructions() {
   const playbookSections = getSectionsToImplement();
   const integrationSections = getEnabledIntegrationSections();
+  const sections = [integrationSections, playbookSections];
   const doc = DocumentApp.openById(ucdFileId);
   const body = doc.getBody();
 
@@ -166,7 +230,8 @@ function useCaseInstructions() {
       currentIndex = insertFormattedSection(body, currentIndex, section, sectionCounter++);
     });
   }
-
+  // 🔹 Then Create Project Tracker
+  appendToProjectTracker(sections);
   doc.saveAndClose();
 }
 
@@ -338,4 +403,23 @@ function getEnabledIntegrationSections() {
   }
 
   return output;
+}
+
+function appendToProjectTracker(sections) {
+  const trackerSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Project_Tracker");
+  if (!trackerSheet) throw new Error("Project_Tracker sheet not found.");
+
+  let stepCounter = 1;
+  sections.forEach(section => {
+    const row = [
+      section.SectionHeader || "Untitled Feature",
+      `${stepCounter}. ${section.SectionHeader || "Untitled"}`,
+      section.Type === "Integration" ? "No":"Yes",
+      section.Type === "Integration" ? "Yes":"No",
+      "Yes",
+      section.Purpose || ""
+    ];
+    trackerSheet.appendRow(row);
+    stepCounter++;
+  });
 }
